@@ -1,7 +1,7 @@
 # BuccalTimer 
 ## ー クリオネを集めよう！ポモドーロタイマー集中力継続アプリ ー
 
-[![ヘッダー画像](head.png)](https://www.youtube.com/watch?v=yYRQEdfGjEg)
+[![ヘッダー画像](BuccalTimer_icon.png)](https://www.youtube.com/watch?v=yYRQEdfGjEg)
 
 ## チーム名：be Careful (ビーケアフル)
 ### チームメンバー
@@ -89,7 +89,7 @@
 ## 開発技術
 ### 活用した技術
 #### システム図
-![システム図](images/system.png)
+![システム図](images/JPHacks2023.png)
 
 #### API・データ
 * なし
