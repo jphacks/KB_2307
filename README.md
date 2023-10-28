@@ -1,4 +1,5 @@
-# BuccalTimer ー クリオネを集めよう！ポモドーロタイマー集中力継続アプリ ー
+# BuccalTimer 
+## ー クリオネを集めよう！ポモドーロタイマー集中力継続アプリ ー
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2023/07/JPHACKS2023_ogp.png)](https://www.youtube.com/watch?v=yYRQEdfGjEg)
 
@@ -109,7 +110,6 @@
   * Maya
   * Procreate
   * Ilustrator
-
 
 #### デバイス
 * iPhone（ジャイロセンサー，TapticEngine，クライアント）
