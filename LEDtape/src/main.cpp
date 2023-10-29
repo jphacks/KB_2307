@@ -1,20 +1,16 @@
-#include <M5Atom.h>
+#include <FastLED.h>
+#include<M5Atom.h>
 #include<WiFi.h>
 #include<WiFiUdp.h>
-#include <Adafruit_NeoPixel.h>  //NeoPixel SK6812制御用ライブラリ
 
-#define PIN        22  // LEDテープ信号端子
-#define NUMPIXELS  10  // LEDの数
-
+#define NUM_LEDS 10
+#define DATA_PIN 22 //How boring and obvious!
+#define COLOR_ORDER GRB //Green (G), Red (R), Blue (B)
+#define CHIPSET WS2812B
+#define BRIGHTNESS 60
+#define VOLTS 5
+#define MAX_AMPS 500 //value in milliamps
 #define BUFSIZE 1024
-
-
-const char* ssid     = "SPWH_LI3_44E02B_5G";
-const char* password = "3sL44wR6";
-const int port = 60000;
-
-WiFiUDP udp;
-
 
 int concent[3]={255,228,206};     //集中するときのRGB
 int relax[3] ={255,165,0};     //リラックスするときのRGB
@@ -24,162 +20,113 @@ bool _concent=true;             //照明変化に使用するフラグ
 bool _relax=true;
 bool _warning =true;
 
-int _click=0;
-int mode=0;
+int mode;                      //モードのデバッグ用
+
+#define DELAYVAL 100 // Time (in milliseconds) to pause between pixels
 
 
-// NeoPixel初期設定
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+WiFiUDP udp;
+
+const char* ssid = "SPWH_L13_44E02B";
+const char* password = "3sL44wR6";
+const int port = 5000;
 
 
-// 初期設定
+CRGB leds[NUM_LEDS];
+
+int data,click;
+
 void setup() {
-  M5.begin(true, false, false);  //Serial,POWER,LED
-  pixels.begin();     //NeoPixel初期化
-  pixels.clear();     //LED色指定クリア
+
+M5.begin(true, false, true);  //Serial,I2C,LED
+
+FastLED.addLeds<CHIPSET,DATA_PIN,COLOR_ORDER>(leds,NUM_LEDS);
+FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS,MAX_AMPS);
+FastLED.setBrightness(BRIGHTNESS);
+FastLED.clear();
+FastLED.show(); 
 
 
+WiFi.config(IPAddress(192, 168, 0, 100), IPAddress(192, 168, 0, 1), IPAddress(255, 255, 255, 0), IPAddress(192, 168, 0, 1));
+    WiFi.begin(ssid, password);
 }
-// メイン
-void loop() {
 
-  M5.update();
-  char packetBuffer[BUFSIZE];
+void loop() { //Swirly, twirly effect
 
+M5.update();
 
-// M5atom スイッチのクリック入力取得
+////////// M5atom スイッチのクリック入力取得 ///////////////
 
-  if(M5.Btn.isPressed())data++;
+if(M5.Btn.isPressed())data++;
   else data=0;
 
-  if(data==1)_click=1;
-  else _click=0;
+  if(data==1)click=1;
+  else click=0;
 
 
-  if(_click==1){
+  if(click==1){
     mode++;
   }
 
   if(mode==4) mode=0;
-  Serial.println(mode);
+
+
+//////////////////////////////////////////////////////
+
+char packetBuffer[255];
+    int packetSize = udp.parsePacket();
+    
+    if (packetSize) {
+        udp.read(packetBuffer, packetSize);
+        packetBuffer[packetSize] = 0;
+
+    }
+
+
+Serial.print(mode);
+
+
 
 ////////////////////////////// LED の制御/////////////////////////////////////////////
 ///// 0:リラックスモード  1:集中モード　2:警告モード　3:消灯////////////////////////////////
 
-  switch(mode){
-    case 0:
-    //集中→リラックス
 
-      _concent=true;
+switch(mode){
 
-      if(_relax){
-        for(int j=255;j>0;j-=10){
-          pixels.setBrightness(constrain(j,0,255));
+  case 0:// リラックス
+    for (int i=0; i<NUM_LEDS; i++) {
+    leds[i] = CRGB(255,165 ,30);
+    FastLED.show();
+    delay(10); 
+  }
+    break;
 
-           for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-            pixels.setPixelColor(i, pixels.Color(concent[0], concent[1], concent[2]));       
-          
-            }
-            pixels.show();  //LED色出力
+  case 1://集中
+  for (int i=0; i<NUM_LEDS; i++) {
+    leds[i] = CRGB(255,255 ,255);
+    FastLED.show();
+    delay(10); 
+  }
+    break;
 
-            }
-
-         for(int j=0;j<255;j+=10){
-          pixels.setBrightness(constrain(j,0,255));
-          for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-          pixels.setPixelColor(i, pixels.Color(relax[0], relax[1], relax[2]));       
-          
-         }
-         pixels.show();  //LED色出力
-         delay(50);
-
-        }
-
-        _relax=false;
-
-      }
-
-
-      for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-      pixels.setPixelColor(i, pixels.Color(relax[0], relax[1], relax[2])); //全LED色指定(r,g,b)
-      }
-      pixels.show();  //LED色出力
-      delay(50);
-
+  case 2://警告
+  for (int i=0; i<NUM_LEDS; i++) {
+    leds[i] = CRGB(255,0 ,0);
+    FastLED.show();
+    delay(10); 
+  }
 
     break;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-  
-
-    case 1: 
-
-    //リラックス→集中
-
-     _relax=true;
-
-
-       if(_concent){
-        for(int j=255;j>0;j-=10){
-          pixels.setBrightness(constrain(j,0,255));
-
-           for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-            pixels.setPixelColor(i, pixels.Color(relax[0], relax[1], relax[2]));       
-          
-            }
-            pixels.show();  //LED色出力
-            delay(50);
-            }
-
-         for(int j=0;j<255;j+=10){
-          pixels.setBrightness(constrain(j,0,255));
-
-          for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-          pixels.setPixelColor(i, pixels.Color(concent[0], concent[1], concent[2]));       
-          
-         }
-         pixels.show();  //LED色出力
-         delay(50);
-
-        }
-
-        _concent=false;
-      }
-
-      for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-          pixels.setPixelColor(i, pixels.Color(concent[0], concent[1], concent[2]));       
-          
-         }
-         pixels.show();  //LED色出力
-
-
-      break;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-    case 2:
-
-      pixels.setBrightness(255);
-      for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-          pixels.setPixelColor(i, pixels.Color(warning[0], warning[1], warning[2]));
-         }
-         pixels.show();  //LED色出力
+  case 3://無し
+  for (int i=0; i<NUM_LEDS; i++) {
+    leds[i] = CRGB(0,0 ,0);
+    FastLED.show();
+    delay(10); 
+  }
 
     break;
 
+}
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-    case 3:
-
-      pixels.setBrightness(0);
-      for(int i = NUMPIXELS - 1; i >= 0; i--) {    //LED番号59～0まで繰り返し
-          pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-         }
-         pixels.show();  //LED色出力
-
-    break;  
- }
- 
 }
