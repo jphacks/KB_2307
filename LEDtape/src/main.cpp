@@ -3,7 +3,7 @@
 #include<WiFi.h>
 #include<WiFiUdp.h>
 
-#define NUM_LEDS 10 //LEDの個数
+#define NUM_LEDS 31 //LEDの個数
 #define DATA_PIN 22 //LED制御に使用するGPIOピン
 #define COLOR_ORDER GRB //Green (G), Red (R), Blue (B)
 #define CHIPSET WS2812B
@@ -19,8 +19,7 @@ CRGB leds[NUM_LEDS];
 const char* ssid = "SPWH_L13_44E02B"; //WifiのSSID
 const char* password = "3sL44wR6";    //パスワード
 const int port = 5000;                //ポート番号
-
-int mode[4][3]={{255,228,206},{255,165,0},{255,0,0},{0,0,0}};//それぞれのモードのRGBを二次元配列で管理　 [0: 集中   1: リラックス  2: 警告   3:照明なし]
+int mode[4][3]={{255,165,0},{255,228,206},{255,0,0},{0,0,0}};//それぞれのモードのRGBを二次元配列で管理　 [0: リラックス   1: 集中  2: 警告   3:照明なし]
 int past_num,rec_data,past_rec_data; //wifiからのモード番号受信，現在のモードと直前のモードを格納
 
 /////////////////////三角波で輝度＋色を段階的に変化させる関数///////////////////////////////////
