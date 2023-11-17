@@ -92,7 +92,7 @@
 ## 開発技術
 ### 活用した技術
 #### システム図
-![システム図](https://github.com/jphacks/KB_2307/assets/136322740/d93f7304-4e2c-4ae8-8adc-4e891d308a0e)
+![システム図](https://github.com/jphacks/KB_2307/assets/136322740/32b1c0ba-58f7-4386-a4b3-f2d39a2b4464)
 
 
 #### API・データ
