@@ -92,7 +92,8 @@
 ## 開発技術
 ### 活用した技術
 #### システム図
-![システム図](images/JPHacks2023.png)
+![システム図](https://github.com/jphacks/KB_2307/assets/136322740/d93f7304-4e2c-4ae8-8adc-4e891d308a0e)
+
 
 #### API・データ
 * なし
