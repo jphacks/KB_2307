@@ -1,7 +1,7 @@
 #include <M5Atom.h>
 #include <FastLED.h>
 
-#define NUM_LEDS 58      //LEDの個数
+#define NUM_LEDS 55      //LEDの個数
 #define DATA_PIN 22      //LED制御に使用するGPIOピン
 #define COLOR_ORDER GRB  //Green (G), Red (R), Blue (B)
 #define CHIPSET WS2812B
@@ -14,20 +14,29 @@
 CRGB leds[NUM_LEDS];
 String recieve;
 
-//それぞれのモードのRGBを二次元配列で管理//[0: 集中   1: リラックス  2: 警告   3:照明なし]
-int mode[4][3] = { { 255, 228, 206 }, { 255, 165, 0 }, { 255, 0, 0 }, { 0, 0, 0 } };  
+//それぞれのモードのRGBを二次元配列で管理//[0:照明なし, 1: 集中   2: リラックス  3: 警告 ]   旧Ver [3:照明なし, 0: 集中   1: リラックス  2: 警告 ] 
+int mode[4][3] = { { 0, 0, 0 } , { 255, 228, 206 }, { 255, 135, 25 }, { 255, 0, 0 }};  
 int ledcheck[3] = { 242, 72, 34 };                                                    //接続判定用LEDのRGB
 int past_num, rec_data, past_rec_data;                                                //bluetoothからのモード番号受信，現在のモードと直前のモードを格納
+bool connect_check = false;
 CRGB dispColor(uint8_t r, uint8_t g, uint8_t b) {return (CRGB)((r << 16) | (g << 8) | b);}
 
 /////////////////////三角波で輝度＋色を段階的に変化させる関数///////////////////////////////////
 void LED_bright_dark(int past, int now) {
   if (now == 2) {  // 警告時，瞬時に赤色に点灯
-    for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(mode[2][0], mode[2][1], mode[2][2]);
+    for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(mode[3][0], mode[3][1], mode[3][2]);
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.show();
     delay(20);
-  } else {  //通常，モード切り替え時は緩やかに LED が明滅
+  } 
+  else if (past==2 && now ==0){ //警告モードからの復帰時は瞬時に白色に点灯
+    for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(mode[1][0], mode[1][1], mode[1][2]);
+    FastLED.setBrightness(BRIGHTNESS);
+    FastLED.show();
+    delay(20);
+  }
+
+  else {  //通常，モード切り替え時は緩やかに LED が明滅
     for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(mode[past][0], mode[past][1], mode[past][2]);
     for (int i = BRIGHTNESS; i > 0; i -= 3) {
       FastLED.setBrightness(i);
@@ -154,6 +163,7 @@ void loopBLE() {
     pServer->startAdvertising();  // アドバタイズの再開
     Serial.println("startAdvertising");
     oldDeviceConnected = deviceConnected;
+    connect_check=false;
 
     for (int i = 0; i < 25; i++) {
       M5.dis.drawpix(i,0);
@@ -167,6 +177,7 @@ void loopBLE() {
   if (deviceConnected && !oldDeviceConnected) {
     oldDeviceConnected = deviceConnected;
     isConnected = true;
+    connect_check=true;
     //接続判定用LED
     for (int i = 0; i < 25; i++) {
       M5.dis.drawpix(i,dispColor(ledcheck[0],ledcheck[1],ledcheck[2]));
@@ -191,7 +202,8 @@ void loop() {
   past_rec_data = rec_data;  //モードの更新
   loopBLE();
 
-  rec_data = recieve.toInt();
+  if(connect_check)rec_data = recieve.toInt();//接続している時だけデータの読み取り
+  else rec_data=3; //接続してない時は消灯
   
 //モード変更時，色＋輝度を変化させる関数の呼び出し
   if (past_rec_data != rec_data) {
